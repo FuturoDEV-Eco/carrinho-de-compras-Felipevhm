@@ -3,7 +3,6 @@ const Database = require("../database/db");
 class PedidoController extends Database {
   async criar(request, response) {
     const dados = await request.body;
-    console.log(dados);
     // Validações
     if (!dados.client_id || typeof dados.client_id !== "number") {
       return response
@@ -48,6 +47,9 @@ class PedidoController extends Database {
 
     for (let i = 0; i < dados.products.length; i++) {
       const item = dados.products[i];
+      console.log('item: ')
+      console.log(item)
+
       const produtoAtual = await this.database.query(
         `
                 SELECT price FROM products 
@@ -55,9 +57,6 @@ class PedidoController extends Database {
             `,
         [item.product_id]
       );
-
-      console.log("||| produtoAtual.rows[0] é: ");
-      console.log(produtoAtual.rows[0]);
 
       total = total + produtoAtual.rows[0].price * item.amount;
     }
