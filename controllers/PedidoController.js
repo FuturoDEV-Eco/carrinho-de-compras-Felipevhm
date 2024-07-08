@@ -5,13 +5,36 @@ class PedidoController extends Database {
     try {
       const dados = await request.body;
 
-      // Condições de validação
+      // Validações individuais com mensagens específicas
+      if (!dados.client_id || typeof dados.client_id !== "number") {
+        return response.status(400).json({ mensagem: "Client ID é obrigatório e deve ser um número" });
+      }
+
+      if (!dados.address || typeof dados.address !== "string") {
+        return response.status(400).json({ mensagem: "Address é obrigatório e deve ser um texto" });
+      }
+
+      if (!Array.isArray(dados.products) || dados.products.length === 0) {
+        return response.status(400).json({ mensagem: "Products é obrigatório e deve ser uma lista de produtos" });
+      }
+
+      for (let i = 0; i < dados.products.length; i++) {
+        const item = dados.products[i];
+        if (!item.product_id || typeof item.product_id !== "number") {
+          return response.status(400).json({ mensagem: `Product ID do item ${i} é obrigatório e deve ser um número` });
+        }
+
+        if (!item.amount || typeof item.amount !== "number") {
+          return response.status(400).json({ mensagem: `Amount do item ${i} é obrigatório e deve ser um número` });
+        }
+      }
+
+      // Verificação de todas as condições juntas para garantir que os dados são válidos
       const isValidClientId = dados.client_id && typeof dados.client_id === "number";
       const isValidAddress = dados.address && typeof dados.address === "string";
       const isValidProducts = Array.isArray(dados.products) && dados.products.length > 0;
 
       let areValidProducts = true;
-
       for (let i = 0; i < dados.products.length; i++) {
         const item = dados.products[i];
         if (!item.product_id || typeof item.product_id !== "number" || !item.amount || typeof item.amount !== "number") {
@@ -20,9 +43,7 @@ class PedidoController extends Database {
         }
       }
 
-      // Verificação de todas as condições
       if (isValidClientId && isValidAddress && isValidProducts && areValidProducts) {
-
         // Verificar se o client_id existe
         const cliente = await this.database.query(
           `SELECT id FROM clients WHERE id = $1`,
@@ -34,11 +55,10 @@ class PedidoController extends Database {
         }
 
         let total = 0;
-
         for (let i = 0; i < dados.products.length; i++) {
           const item = dados.products[i];
           console.log('item: ')
-          console.log(item)
+          console.log(item);
 
           const produtoAtual = await this.database.query(
             `SELECT price FROM products WHERE id = $1`,
